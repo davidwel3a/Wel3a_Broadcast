@@ -9,8 +9,8 @@ export async function getSessionUser(): Promise<UserProfile | null> {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('broadcast_session')?.value;
 
-  // Development / Demo fallback user
-  if (!sessionToken && process.env.NODE_ENV !== 'production') {
+  // Fallback user when running without a remote OAuth session
+  if (!sessionToken) {
     return {
       id: '00000000-0000-0000-0000-000000000001',
       username: 'DavidDev',

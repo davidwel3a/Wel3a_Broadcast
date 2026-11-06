@@ -16,13 +16,14 @@ export async function POST(req: Request) {
     const user = await requireAuthUser();
     const body = await req.json();
     const { token } = connectSchema.parse(body);
+    const cleanToken = token.trim().replace(/^["']|["']$/g, '');
 
     // 1. Validate token with Discord REST API
-    const botInfo = await validateAndConnectBot(token);
-    setActiveBotToken(user.id, token);
+    const botInfo = await validateAndConnectBot(cleanToken);
+    setActiveBotToken(user.id, cleanToken);
 
     // 2. Encrypt token using AES-256-GCM
-    const { encrypted, iv, tag } = encryptToken(token);
+    const { encrypted, iv, tag } = encryptToken(cleanToken);
 
     // 3. Upsert into database if configured
     if (db) {
@@ -60,9 +61,13 @@ export async function POST(req: Request) {
       bot: botInfo,
     });
   } catch (err: unknown) {
-    const error = err as Error;
+    const error = err as { message?: string; status?: number; code?: number };
+    let msg = error.message || 'Failed to connect bot';
+    if (msg.includes('401') || msg.toLowerCase().includes('unauthorized') || msg.includes('token')) {
+      msg = 'توكن البوت غير صحيح أو تم إعادة تعيينه (Invalid Bot Token). تأكد من نسخه من Discord Developer Portal > Bot > Reset Token.';
+    }
     return NextResponse.json(
-      { success: false, message: error.message || 'Failed to connect bot' },
+      { success: false, message: msg },
       { status: 400 }
     );
   }
