@@ -8,7 +8,7 @@ export default function TermsPage() {
       <div className="mb-8">
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-accent transition-colors">
           <ArrowLeft size={16} />
-          Back to RoleBeacon
+          Back to Wel3a_Broadcast
         </Link>
       </div>
 
@@ -25,14 +25,14 @@ export default function TermsPage() {
         <section className="card-glass p-6">
           <h2 className="text-base font-bold text-white mb-2">1. Acceptable Use Policy</h2>
           <p>
-            RoleBeacon is intended strictly for legitimate community announcements, merchant updates, and permissioned member communications. You agree never to use RoleBeacon for unsolicited commercial spam, phishing, harassment, or in violation of Discord&apos;s Developer Terms of Service.
+            Wel3a_Broadcast is intended strictly for legitimate community announcements, merchant updates, and permissioned member communications. You agree never to use Wel3a_Broadcast for unsolicited commercial spam, phishing, harassment, or in violation of Discord&apos;s Developer Terms of Service.
           </p>
         </section>
 
         <section className="card-glass p-6">
           <h2 className="text-base font-bold text-white mb-2">2. Bot Credentials & Gateway Limits</h2>
           <p>
-            You are responsible for maintaining the security of your Discord bot tokens and configuring appropriate Privileged Gateway Intents. RoleBeacon automatically enforces throttling to comply with Discord rate limits; attempts to circumvent these safety mechanisms are strictly prohibited.
+            You are responsible for maintaining the security of your Discord bot tokens and configuring appropriate Privileged Gateway Intents. Wel3a_Broadcast automatically enforces throttling to comply with Discord rate limits; attempts to circumvent these safety mechanisms are strictly prohibited.
           </p>
         </section>
 
@@ -46,7 +46,7 @@ export default function TermsPage() {
         <section className="card-glass p-6">
           <h2 className="text-base font-bold text-white mb-2">4. Limitation of Liability</h2>
           <p>
-            RoleBeacon is provided &ldquo;as is&rdquo; without warranties of any kind. While our platform implements proactive anti-ban tripwires and rate-limiting throttles, we are not responsible for actions taken by Discord against third-party bot applications or developer accounts.
+            Wel3a_Broadcast is provided &ldquo;as is&rdquo; without warranties of any kind. While our platform implements proactive anti-ban tripwires and rate-limiting throttles, we are not responsible for actions taken by Discord against third-party bot applications or developer accounts.
           </p>
         </section>
       </div>

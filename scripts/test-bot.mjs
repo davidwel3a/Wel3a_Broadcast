@@ -4,7 +4,7 @@ import { stdin as input, stdout as output } from 'node:process';
 
 async function main() {
   console.log('\n===========================================');
-  console.log('🤖 RoleBeacon - Discord Live Bot Tester');
+  console.log('🤖 Wel3a_Broadcast - Discord Live Bot Tester');
   console.log('===========================================\n');
 
   const rl = readline.createInterface({ input, output });
@@ -57,7 +57,7 @@ async function main() {
       messageText = await rl.question('👉 اكتب نص الرسالة التجريبية (أو اضغط Enter للرسالة الافتراضية): ');
     }
     if (!messageText || !messageText.trim()) {
-      messageText = '👋 مرحباً! هذه رسالة تجريبية فعلية تم إرسالها بنجاح بواسطة نظام RoleBeacon 🚀';
+      messageText = '👋 مرحباً! هذه رسالة تجريبية فعلية تم إرسالها بنجاح بواسطة نظام Wel3a_Broadcast 🚀';
     }
 
     console.log(`\n⏳ جاري فتح قناة محادثة خاصة (DM Channel) مع المستخدم (${targetUserId})...`);
@@ -83,7 +83,7 @@ async function main() {
               { name: 'الوقت', value: new Date().toLocaleTimeString('ar-EG'), inline: true },
             ],
             footer: {
-              text: 'RoleBeacon Broadcast Engine • تجربة حقيقية',
+              text: 'Wel3a_Broadcast Engine • تجربة حقيقية',
             },
           },
         ],

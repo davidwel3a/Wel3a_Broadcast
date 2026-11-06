@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'RoleBeacon | لوحة إعلانات الديسكورد الموجهة',
-  description: 'منصة RoleBeacon لبث وإرسال إعلانات الديسكورد الموجهة بدقة بحسب الرتب وبأعلى درجات الأمان.',
+  title: 'Wel3a_Broadcast | ولعة برودكاست',
+  description: 'منصة Wel3a_Broadcast لبث وإرسال إعلانات الديسكورد الموجهة بدقة بحسب الرتب وبأعلى درجات الأمان.',
 };
 
 export default function RootLayout({

@@ -21,12 +21,12 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: 'Will using RoleBeacon get my Discord bot banned?',
-      a: 'No. RoleBeacon was engineered specifically to prevent bot bans. We enforce token-bucket throttling (1.2s to 2.5s jitter delay between dispatches), dynamic backoff on HTTP 429, and automatic shut-offs if 403 errors are detected.',
+      q: 'Will using Wel3a_Broadcast get my Discord bot banned?',
+      a: 'No. Wel3a_Broadcast was engineered specifically to prevent bot bans. We enforce token-bucket throttling (1.2s to 2.5s jitter delay between dispatches), dynamic backoff on HTTP 429, and automatic shut-offs if 403 errors are detected.',
     },
     {
-      q: 'How does RoleBeacon handle members who have closed DMs?',
-      a: 'When Discord returns Error 50007 (Cannot send message to this user), RoleBeacon catches it gracefully, classifies it under "Closed DMs", and continues the queue without triggering error cascades.',
+      q: 'How does Wel3a_Broadcast handle members who have closed DMs?',
+      a: 'When Discord returns Error 50007 (Cannot send message to this user), Wel3a_Broadcast catches it gracefully, classifies it under "Closed DMs", and continues the queue without triggering error cascades.',
     },
     {
       q: 'Where are my bot tokens stored?',
@@ -47,7 +47,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-accent to-blue-500 flex items-center justify-center text-white shadow-md">
               <ShieldCheck size={18} />
             </div>
-            <span className="font-bold text-lg text-text tracking-tight">RoleBeacon</span>
+            <span className="font-bold text-lg text-text tracking-tight">Wel3a_Broadcast</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export default function LandingPage() {
                 <span className="w-3 h-3 rounded-full bg-red-500/80" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
                 <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                <span className="text-xs text-text-muted ml-2 font-mono">rolebeacon.app/console</span>
+                <span className="text-xs text-text-muted ml-2 font-mono">wel3a-broadcast.app/console</span>
               </div>
               <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
                 ● Bot Connected & Active
@@ -401,7 +401,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-border/60 py-8 text-center text-xs text-text-muted">
-        <p>© 2026 RoleBeacon. Precision Discord announcement infrastructure. All rights reserved.</p>
+        <p>© 2026 Wel3a_Broadcast. Precision Discord announcement infrastructure. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -10,7 +10,7 @@ const IV_LENGTH = 16;
 function getMasterKey(): Buffer {
   const secret = process.env.ENCRYPTION_MASTER_KEY;
   if (!secret) {
-    return crypto.createHash('sha256').update('rolebeacon-fallback-local-master-key-2026').digest();
+    return crypto.createHash('sha256').update('wel3a-broadcast-fallback-local-master-key-2026').digest();
   }
   try {
     const buf = Buffer.from(secret, 'hex');
