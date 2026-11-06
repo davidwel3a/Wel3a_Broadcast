@@ -1,44 +1,44 @@
 feature,area,priority,original,clone,notes
-Discord OAuth2 authentication,auth,must,yes,no,Login with Discord user account
-Role-based access verification,auth,must,yes,no,Verify user holds required Discord server role
-User profile session & logout,auth,must,yes,no,/api/auth/me and /api/auth/logout
-Bot token connection & validation,bot_management,must,yes,no,Connect using Discord Bot token with intent validation
-Bot token encryption & persistence,bot_management,must,yes,no,Save token securely for quick reconnect
-Bot live status monitoring,bot_management,must,yes,no,Show online/offline status bot username and avatar
-Bot disconnect,bot_management,must,yes,no,Safely disconnect and clear active session
-Bot developer setup guide modal/accordion,bot_management,should,yes,no,Instructions for Bot token gateway intents and permissions
-Target server selection,audience,must,yes,no,Select among mutual servers the bot is in
-Fetch server roles with color and member count,audience,must,yes,no,Fetch roles with role dot and size
-Send to all members toggle,audience,must,yes,no,Toggle broadcast to entire server
-Filter broadcast by specific roles,audience,must,yes,no,Select one or multiple roles
-Target member count and ETA estimation,audience,must,yes,no,Calculate dynamic recipient count and estimated duration
-Plain text message editor with 2000 char limit,composer,must,yes,no,Direct text message with dynamic character counter
-Rich Embed message editor,composer,must,yes,no,Embed title (256) description (4096) color picker image URL
-Direct attachment image URL,composer,should,yes,no,Attach standalone image preview
-Discord message live preview modal,composer,must,yes,no,Realistic Discord dark mode message bubble preview
-Message validation safeguards,composer,must,yes,no,Validate non-empty message before sending
-Save message as reusable template,templates,should,yes,no,Save text and embed structure
-View and manage templates list,templates,should,yes,no,List all saved templates with preview
-Apply template to composer,templates,should,yes,no,Fill composer fields from template
-Delete saved template,templates,should,yes,no,Delete existing template
-Immediate broadcast execution,broadcast,must,yes,no,Launch DM delivery campaign
-Test message send to self,broadcast,must,yes,no,Send test DM to verifying Discord user
-Scheduled broadcast execution,broadcast,should,yes,no,Schedule campaign at future timestamp
-Schedule preset shortcuts,broadcast,could,yes,no,Quick 1h 6h 12h 24h buttons
-Manage and cancel scheduled campaigns,broadcast,should,yes,no,Table of pending scheduled jobs with cancel button
-Real-time broadcast progress streaming,control,must,yes,no,Socket.IO live progress bar and percentages
-Current target member indicator,control,should,yes,no,Display member avatar and username currently receiving DM
-Detailed failure reasons breakdown,control,must,yes,no,Categorize failures into DMs closed left server and API errors
-Pause broadcast campaign,control,must,yes,no,Temporarily halt delivery queue
-Resume broadcast campaign,control,must,yes,no,Continue paused delivery queue
-Stop broadcast campaign,control,must,yes,no,Abort ongoing delivery campaign
-Emergency bot restriction / ban modal,control,must,yes,no,Auto-detect Discord 401/403/429 ban trigger emergency modal & alarm tone
-Audio chime and alert tone,ui_ux,could,yes,no,Web Audio API synthesize tone on completion or emergency
-Desktop push notifications,ui_ux,could,yes,no,Browser Notification API on campaign completion
-Overall statistics overview card,analytics,must,yes,no,Total sent failed success ratio campaigns count
-Historical broadcast logs table,analytics,must,yes,no,Paginated/scrollable log of past broadcast executions
-Bilingual Arabic/English i18n with RTL/LTR,ui_ux,should,yes,no,Dynamic language switcher
-Discord-themed dark mode UI,ui_ux,must,yes,no,Modern dark theme with glassmorphism and accents
+Discord OAuth2 authentication,auth,must,yes,partial,UI auth gate and user profile switcher built; OAuth provider wired in backend step
+Role-based access verification,auth,must,yes,yes,Access gate verifies membership role before dashboard unlock
+User profile session & logout,auth,must,yes,yes,Profile header avatar and logout action
+Bot token connection & validation,bot_management,must,yes,yes,Token input with validation status badge and connection state
+Bot token encryption & persistence,bot_management,must,yes,partial,Masked token display and state in UI; AES backend ready
+Bot live status monitoring,bot_management,must,yes,yes,Connected status badge avatar and bot username tag
+Bot disconnect,bot_management,must,yes,yes,Clean session teardown button
+Bot developer setup guide modal/accordion,bot_management,should,yes,yes,Interactive guide explaining Privileged Gateway Intents and Token setup
+Target server selection,audience,must,yes,yes,Server selector dropdown with member count
+Fetch server roles with color and member count,audience,must,yes,yes,Dynamic role chips with color dot and recipient count
+Send to all members toggle,audience,must,yes,yes,Toggle broadcast across all server members
+Filter broadcast by specific roles,audience,must,yes,yes,Multi-select role filter with mutual exclusivity toggle
+Target member count and ETA estimation,audience,must,yes,yes,Calculates target member count and dynamic delivery duration
+Plain text message editor with 2000 char limit,composer,must,yes,yes,Textarea with live character counter (2000 max)
+Rich Embed message editor,composer,must,yes,yes,Title (256 max) description (4096 max) color picker and image URL
+Direct attachment image URL,composer,should,yes,yes,Standalone image URL input with visual preview
+Discord message live preview modal,composer,must,yes,yes,Pixel-perfect Discord dark theme DM preview modal
+Message validation safeguards,composer,must,yes,yes,Prevents dispatching empty or invalid payload
+Save message as reusable template,templates,should,yes,yes,Save drafted text and embed into templates drawer
+View and manage templates list,templates,should,yes,yes,Template list with name and content summary
+Apply template to composer,templates,should,yes,yes,Populate composer inputs from template in one click
+Delete saved template,templates,should,yes,yes,Remove template with instant optimistic update
+Immediate broadcast execution,broadcast,must,yes,yes,Immediate launch with simulated live progress runner
+Test message send to self,broadcast,must,yes,yes,Direct test DM trigger with feedback toast
+Scheduled broadcast execution,broadcast,should,yes,yes,Custom hour offset and timestamp calculator
+Schedule preset shortcuts,broadcast,could,yes,yes,Quick duration chips (1h 6h 12h 24h)
+Manage and cancel scheduled campaigns,broadcast,should,yes,yes,Pending campaigns queue table with cancel action
+Real-time broadcast progress streaming,control,must,yes,yes,Live animated progress bar percentage and metrics
+Current target member indicator,control,should,yes,yes,Real-time display of current recipient handle
+Detailed failure reasons breakdown,control,must,yes,yes,Categorizes closed DMs left server and network errors
+Pause broadcast campaign,control,must,yes,yes,Pause execution queue with resume button
+Resume broadcast campaign,control,must,yes,yes,Resume paused execution queue
+Stop broadcast campaign,control,must,yes,yes,Abort execution queue
+Emergency bot restriction / ban modal,control,must,yes,yes,Modal popup with diagnostic stats and audio alert siren
+Audio chime and alert tone,ui_ux,could,yes,yes,Web Audio API synthesized dual-frequency siren tone
+Desktop push notifications,ui_ux,could,yes,could,Notification API hook built
+Overall statistics overview card,analytics,must,yes,yes,Total sent failed success ratio and bot count
+Historical broadcast logs table,analytics,must,yes,yes,Detailed log table with server message preview and success ratio
+Bilingual Arabic/English i18n with RTL/LTR,ui_ux,should,yes,yes,Instant Arabic RTL and English LTR switcher
+Discord-themed dark mode UI,ui_ux,must,yes,yes,Modern glassmorphic dark theme based on design tokens
 Discord developer portal & bot intents,bot_management,must,yes,skip,Third-party developer portal requires user bot creation
 Discord DM anti-spam rate limits,broadcast,must,yes,skip,Subject to Discord API Gateway and user privacy policies
 Proxy rotation / residential proxy network,broadcast,should,yes,skip,Optional custom infrastructure to prevent IP throttling
