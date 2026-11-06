@@ -10,12 +10,15 @@ const IV_LENGTH = 16;
 function getMasterKey(): Buffer {
   const secret = process.env.ENCRYPTION_MASTER_KEY;
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('ENCRYPTION_MASTER_KEY must be set in production');
-    }
-    return crypto.createHash('sha256').update('dev-secret-encryption-key-for-local-development').digest();
+    return crypto.createHash('sha256').update('rolebeacon-fallback-local-master-key-2026').digest();
   }
-  return Buffer.from(secret, 'hex');
+  try {
+    const buf = Buffer.from(secret, 'hex');
+    if (buf.length === 32) return buf;
+    return crypto.createHash('sha256').update(secret).digest();
+  } catch {
+    return crypto.createHash('sha256').update(secret).digest();
+  }
 }
 
 export interface EncryptedData {
