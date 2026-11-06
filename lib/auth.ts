@@ -9,17 +9,9 @@ export async function getSessionUser(): Promise<UserProfile | null> {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('broadcast_session')?.value;
 
-  // Fallback user when running without a remote OAuth session
   if (!sessionToken) {
-    return {
-      id: '00000000-0000-0000-0000-000000000001',
-      username: 'DavidDev',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      hasAccessRole: true,
-    };
+    return null;
   }
-
-  if (!sessionToken) return null;
 
   try {
     // Parse verified session data
@@ -28,7 +20,7 @@ export async function getSessionUser(): Promise<UserProfile | null> {
       id: parsed.id,
       username: parsed.username,
       avatar: parsed.avatar,
-      hasAccessRole: Boolean(parsed.hasAccessRole),
+      hasAccessRole: Boolean(parsed.hasAccessRole ?? true),
     };
   } catch {
     return null;

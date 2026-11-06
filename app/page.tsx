@@ -47,12 +47,35 @@ export default function DashboardPage() {
   const t = translations[lang];
 
   // Auth State (S01)
-  const [user, setUser] = useState<UserProfile | null>({
-    id: 'user_123',
-    username: 'DavidDev',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    hasAccessRole: true,
-  });
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showOAuthSetup, setShowOAuthSetup] = useState(false);
+  const [clientIdInput, setClientIdInput] = useState('');
+  const [clientSecretInput, setClientSecretInput] = useState('');
+  const [isSavingSetup, setIsSavingSetup] = useState(false);
+
+  // Check auth & session on load
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        if (typeof window !== 'undefined' && window.location.search.includes('oauth_setup=true')) {
+          setShowOAuthSetup(true);
+        }
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setUser(data.data);
+          }
+        }
+      } catch {
+        // unauthenticated
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+    checkAuth();
+  }, []);
 
   // Bot Connection State (S02)
   const [botToken, setBotToken] = useState('');
@@ -414,6 +437,49 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSaveOAuthSetup = async () => {
+    if (!clientIdInput.trim() || !clientSecretInput.trim()) {
+      addToast(lang === 'ar' ? 'يرجى إدخال Client ID و Client Secret' : 'Please fill in both fields', 'warning');
+      return;
+    }
+    setIsSavingSetup(true);
+    try {
+      const res = await fetch('/api/auth/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: clientIdInput.trim(),
+          clientSecret: clientSecretInput.trim(),
+        }),
+      });
+      if (res.ok) {
+        addToast(lang === 'ar' ? 'تم حفظ المفاتيح بنجاح! جاري تحويلك إلى دسكورد...' : 'Saved! Redirecting to Discord...', 'success');
+        setTimeout(() => {
+          window.location.href = '/api/auth/discord';
+        }, 800);
+      } else {
+        throw new Error('Failed to save credentials');
+      }
+    } catch (e: unknown) {
+      const err = e as Error;
+      addToast(err.message || 'Error', 'warning');
+    } finally {
+      setIsSavingSetup(false);
+    }
+  };
+
+  // If loading session
+  if (authLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4 bg-bg">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          <span className="text-xs text-text-muted">جاري التحقق من الجلسة...</span>
+        </div>
+      </main>
+    );
+  }
+
   // If unauthenticated (S01)
   if (!user) {
     return (
@@ -424,19 +490,72 @@ export default function DashboardPage() {
           </div>
           <h2 className="text-xl font-bold text-text mb-2">{t.loginTitle}</h2>
           <p className="text-sm text-text-muted leading-relaxed mb-6">{t.loginDesc}</p>
-          <Button
-            variant="discord"
-            size="lg"
-            fullWidth
-            onClick={() => setUser({
-              id: 'user_david',
-              username: 'DavidDev',
-              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-              hasAccessRole: true,
-            })}
-          >
-            {t.loginButton}
-          </Button>
+
+          {showOAuthSetup ? (
+            <div className="w-full text-left rtl:text-right flex flex-col gap-3.5">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300 leading-relaxed">
+                {lang === 'ar'
+                  ? 'لتفعيل تسجيل الدخول، انسخ Client ID و Client Secret من تطبيقك في Discord Developer Portal > OAuth2:'
+                  : 'To enable OAuth login, enter your Client ID & Secret from Discord Developer Portal > OAuth2:'}
+              </div>
+              <Input
+                label="Discord Client ID"
+                placeholder="مثال: 132456789012345678"
+                value={clientIdInput}
+                onChange={(e) => setClientIdInput(e.target.value)}
+              />
+              <Input
+                isPassword
+                label="Discord Client Secret"
+                placeholder="Client Secret"
+                value={clientSecretInput}
+                onChange={(e) => setClientSecretInput(e.target.value)}
+              />
+              <div className="text-[11px] text-text-muted bg-black/30 p-2.5 rounded border border-white/5">
+                {lang === 'ar'
+                  ? 'تأكد من إضافة هذا الرابط في صفحة OAuth2 > Redirects في دسكورد:'
+                  : 'Ensure this Redirect URI is added in Discord Developer Portal > OAuth2 > Redirects:'}
+                <code className="block mt-1 font-mono text-accent break-all">
+                  http://localhost:3000/api/auth/discord/callback
+                </code>
+              </div>
+              <Button
+                variant="primary"
+                fullWidth
+                loading={isSavingSetup}
+                onClick={handleSaveOAuthSetup}
+              >
+                {lang === 'ar' ? 'حفظ ومتابعة الدخول إلى دسكورد' : 'Save & Continue to Discord'}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowOAuthSetup(false)}
+                className="text-xs text-text-muted hover:text-text text-center mt-1"
+              >
+                {lang === 'ar' ? 'رجوع' : 'Back'}
+              </button>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col gap-3">
+              <Button
+                variant="discord"
+                size="lg"
+                fullWidth
+                onClick={() => {
+                  window.location.href = '/api/auth/discord';
+                }}
+              >
+                {t.loginButton}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowOAuthSetup(true)}
+                className="text-xs text-text-muted hover:text-accent transition-colors"
+              >
+                ⚙️ {lang === 'ar' ? 'إعداد مفاتيح دسكورد (OAuth2 Setup)' : 'Configure Discord OAuth Keys'}
+              </button>
+            </div>
+          )}
         </div>
       </main>
     );
@@ -471,7 +590,14 @@ export default function DashboardPage() {
               <span className="text-xs font-medium text-text">{user.username}</span>
             </div>
 
-            <Button variant="ghost" size="sm" onClick={() => setUser(null)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                setUser(null);
+              }}
+            >
               {t.logout}
             </Button>
           </div>
