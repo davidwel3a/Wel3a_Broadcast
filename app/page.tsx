@@ -32,6 +32,8 @@ import {
   Language,
   UserProfile,
   BotInfo,
+  DiscordGuild,
+  DiscordRole,
   MessagePayload,
   MessageTemplate,
   BroadcastProgress,
@@ -59,22 +61,47 @@ export default function DashboardPage() {
   });
 
   // Bot Connection State (S02)
-  const [botToken, setBotToken] = useState('••••••••••••••••••••••••••••••••');
-  const [botConnected, setBotConnected] = useState(true);
+  const [botToken, setBotToken] = useState('');
+  const [botConnected, setBotConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [botInfo, setBotInfo] = useState<BotInfo | null>({
-    id: 'bot_98765',
-    username: 'RoleBeaconBot',
-    avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
-    discriminator: '0001',
-  });
+  const [botInfo, setBotInfo] = useState<BotInfo | null>(null);
   const [showSetupHelp, setShowSetupHelp] = useState(false);
 
   // Audience State (S03)
-  const [guildsList, setGuildsList] = useState(mockGuilds);
-  const [selectedGuildId, setSelectedGuildId] = useState(mockGuilds[0].id);
+  const [guildsList, setGuildsList] = useState<DiscordGuild[]>([]);
+  const [selectedGuildId, setSelectedGuildId] = useState<string>('');
   const [sendToAll, setSendToAll] = useState(false);
-  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(['role_vip']);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+
+  // Check bot session status on load
+  useEffect(() => {
+    async function initSession() {
+      try {
+        const res = await fetch('/api/bot/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected && data.bot) {
+            setBotConnected(true);
+            setBotInfo(data.bot);
+            const guildsRes = await fetch('/api/bot/guilds');
+            if (guildsRes.ok) {
+              const liveGuilds = await guildsRes.json();
+              if (Array.isArray(liveGuilds) && liveGuilds.length > 0) {
+                setGuildsList(liveGuilds);
+                setSelectedGuildId(liveGuilds[0].id);
+                if (liveGuilds[0].roles && liveGuilds[0].roles.length > 0) {
+                  setSelectedRoleIds([liveGuilds[0].roles[0].id]);
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // start in disconnected state
+      }
+    }
+    initSession();
+  }, []);
 
   // Message Composer State (S04)
   const [activeTab, setActiveTab] = useState<'text' | 'embed' | 'image'>('text');
@@ -120,12 +147,14 @@ export default function DashboardPage() {
   };
 
   // Helper calculations for Audience
-  const currentGuild = guildsList.find((g) => g.id === selectedGuildId) || guildsList[0] || mockGuilds[0];
-  const targetRecipientCount = sendToAll
-    ? currentGuild.memberCount
-    : currentGuild.roles
-        .filter((r) => selectedRoleIds.includes(r.id))
-        .reduce((acc, curr) => acc + curr.memberCount, 0);
+  const currentGuild: DiscordGuild | null = guildsList.find((g: DiscordGuild) => g.id === selectedGuildId) || guildsList[0] || null;
+  const targetRecipientCount = currentGuild
+    ? sendToAll
+      ? currentGuild.memberCount
+      : (currentGuild.roles || [])
+          .filter((r: DiscordRole) => selectedRoleIds.includes(r.id))
+          .reduce((acc: number, curr: DiscordRole) => acc + (curr.memberCount > 0 ? curr.memberCount : currentGuild.memberCount || 1), 0)
+    : 0;
 
   const estimatedSeconds = Math.round(targetRecipientCount * 1.2);
   const formatETA = (sec: number) => {
@@ -232,6 +261,10 @@ export default function DashboardPage() {
     }
     setBotConnected(false);
     setBotInfo(null);
+    setGuildsList([]);
+    setSelectedGuildId('');
+    setSelectedRoleIds([]);
+    setBotToken('');
     addToast(lang === 'ar' ? 'تم قطع الاتصال بالبوت' : 'Bot disconnected', 'info');
   };
 
@@ -473,73 +506,123 @@ export default function DashboardPage() {
               <span>{t.targetSettingsTitle}</span>
             </h3>
 
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-medium text-text-muted mb-1.5 block">
-                  {t.targetServerLabel}
-                </label>
-                <select
-                  value={selectedGuildId}
-                  onChange={(e) => setSelectedGuildId(e.target.value)}
-                  className="w-full h-10 px-3 bg-surface/80 border border-border rounded-md text-sm text-text focus:outline-none focus:border-accent"
-                >
-                  {guildsList.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.memberCount} {t.membersUnit})
-                    </option>
-                  ))}
-                </select>
+            {!botConnected ? (
+              <div className="p-6 rounded-lg bg-black/20 border border-white/5 text-center flex flex-col items-center justify-center gap-2">
+                <Radio size={24} className="text-accent opacity-70 mb-1" />
+                <p className="text-sm font-semibold text-text">
+                  {lang === 'ar' ? 'يرجى ربط البوت أولاً بالأعلى' : 'Please connect your bot above'}
+                </p>
+                <p className="text-xs text-text-muted max-w-sm">
+                  {lang === 'ar'
+                    ? 'ضع توكن البوت في الخانة بالأعلى واضغط "اتصال بالبوت" لجلب سيرفراتك ورتبك الحقيقية.'
+                    : 'Enter your bot token above and click "Connect Bot" to load your live servers and roles.'}
+                </p>
               </div>
-
-              {/* Roles Selection */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-medium text-text-muted">
-                    {t.selectRolesLabel}
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-xs font-medium text-text cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={sendToAll}
-                      onChange={(e) => {
-                        setSendToAll(e.target.checked);
-                        if (e.target.checked) setSelectedRoleIds([]);
-                      }}
-                      className="rounded border-border text-accent focus:ring-accent"
-                    />
-                    <span>{t.sendToAllLabel}</span>
-                  </label>
-                </div>
-
-                {!sendToAll && (
-                  <div className="flex flex-wrap gap-2 p-3 bg-black/20 rounded-lg border border-white/5 min-h-[50px] items-center">
-                    {currentGuild.roles.map((role) => (
-                      <RoleChip
-                        key={role.id}
-                        id={role.id}
-                        name={role.name}
-                        color={role.color}
-                        memberCount={role.memberCount}
-                        selected={selectedRoleIds.includes(role.id)}
-                        onToggle={handleToggleRole}
-                      />
-                    ))}
-                  </div>
+            ) : guildsList.length === 0 ? (
+              <div className="p-5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center flex flex-col items-center justify-center gap-2">
+                <p className="text-sm font-semibold text-amber-400">
+                  {lang === 'ar' ? '⚠️ البوت متصل، لكنه لم ينضم إلى أي سيرفر دسكورد بعد!' : '⚠️ Bot connected, but is not in any Discord server yet!'}
+                </p>
+                <p className="text-xs text-text-muted max-w-md">
+                  {lang === 'ar'
+                    ? 'لكي تتمكن من اختيار الرتب وإرسال الرسائل، يجب دعوة البوت أولاً إلى سيرفرك:'
+                    : 'To broadcast messages, invite the bot to your Discord server first:'}
+                </p>
+                {botInfo?.id && (
+                  <a
+                    href={`https://discord.com/oauth2/authorize?client_id=${botInfo.id}&permissions=8&scope=bot%20applications.commands`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-discord text-white rounded-md text-xs font-bold hover:bg-discord/90 transition-colors shadow-lg shadow-discord/30"
+                  >
+                    🔗 {lang === 'ar' ? 'دعوة البوت إلى سيرفرك الآن' : 'Invite Bot to Your Server'}
+                  </a>
                 )}
               </div>
-
-              {/* Estimated Target & Duration Badges */}
-              <div className="flex items-center gap-3 pt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/20 rounded-md text-xs font-medium text-accent">
-                  <Users size={14} />
-                  <span>{t.targetCountLabel} <strong>{targetRecipientCount}</strong> {t.membersUnit}</span>
+            ) : currentGuild ? (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="text-xs font-medium text-text-muted mb-1.5 block">
+                    {t.targetServerLabel}
+                  </label>
+                  <select
+                    value={selectedGuildId}
+                    onChange={(e) => {
+                      const newId = e.target.value;
+                      setSelectedGuildId(newId);
+                      const g = guildsList.find((item) => item.id === newId);
+                      if (g && g.roles && g.roles.length > 0) {
+                        setSelectedRoleIds([g.roles[0].id]);
+                      } else {
+                        setSelectedRoleIds([]);
+                      }
+                    }}
+                    className="w-full h-10 px-3 bg-[#0f0f2a] border border-[#2e2554] rounded-md text-sm text-[#f3f0fa] focus:outline-none focus:border-accent"
+                  >
+                    {guildsList.map((g) => (
+                      <option key={g.id} value={g.id} className="bg-[#0f0f2a] text-[#f3f0fa]">
+                        {g.name} ({g.memberCount} {t.membersUnit})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-surface border border-border rounded-md text-xs font-medium text-text-muted">
-                  <Clock size={14} />
-                  <span>{t.estimatedTimeLabel} <strong>{formatETA(estimatedSeconds)}</strong></span>
+
+                {/* Roles Selection */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-text-muted">
+                      {t.selectRolesLabel}
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-text cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={sendToAll}
+                        onChange={(e) => {
+                          setSendToAll(e.target.checked);
+                          if (e.target.checked) setSelectedRoleIds([]);
+                        }}
+                        className="rounded border-border text-accent focus:ring-accent"
+                      />
+                      <span>{t.sendToAllLabel}</span>
+                    </label>
+                  </div>
+
+                  {!sendToAll && (
+                    <div className="flex flex-wrap gap-2 p-3 bg-black/20 rounded-lg border border-white/5 min-h-[50px] items-center">
+                      {currentGuild.roles && currentGuild.roles.length > 0 ? (
+                        currentGuild.roles.map((role: DiscordRole) => (
+                          <RoleChip
+                            key={role.id}
+                            id={role.id}
+                            name={role.name}
+                            color={role.color}
+                            memberCount={role.memberCount}
+                            selected={selectedRoleIds.includes(role.id)}
+                            onToggle={handleToggleRole}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-xs text-text-muted">
+                          {lang === 'ar' ? 'لا توجد رتب مخصصة في هذا السيرفر، تم تفعيل الإرسال للجميع.' : 'No custom roles found.'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Estimated Target & Duration Badges */}
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/20 rounded-md text-xs font-medium text-accent">
+                    <Users size={14} />
+                    <span>{t.targetCountLabel} <strong>{targetRecipientCount}</strong> {t.membersUnit}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-surface border border-border rounded-md text-xs font-medium text-text-muted">
+                    <Clock size={14} />
+                    <span>{t.estimatedTimeLabel} <strong>{formatETA(estimatedSeconds)}</strong></span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </section>
 
           {/* S04: Broadcast Message Composer Card */}
@@ -622,7 +705,7 @@ export default function DashboardPage() {
                   onChange={(e) => setTextContent(e.target.value)}
                   placeholder={t.textPlaceholder}
                   rows={4}
-                  className="w-full p-3 bg-surface/80 border border-border rounded-md text-sm text-text focus:outline-none focus:border-accent resize-y"
+                  className="w-full p-3 bg-[#0f0f2a] border border-[#2e2554] rounded-md text-sm text-[#f3f0fa] placeholder:text-[#8b80b6] focus:outline-none focus:border-accent resize-y"
                   maxLength={2000}
                 />
                 <div className="text-right text-xs text-text-muted">
@@ -650,7 +733,7 @@ export default function DashboardPage() {
                     onChange={(e) => setEmbedDesc(e.target.value)}
                     placeholder={t.embedDescPlaceholder}
                     rows={4}
-                    className="w-full p-3 bg-surface/80 border border-border rounded-md text-sm text-text focus:outline-none focus:border-accent resize-y"
+                    className="w-full p-3 bg-[#0f0f2a] border border-[#2e2554] rounded-md text-sm text-[#f3f0fa] placeholder:text-[#8b80b6] focus:outline-none focus:border-accent resize-y"
                     maxLength={4096}
                   />
                   <div className="text-right text-xs text-text-muted">

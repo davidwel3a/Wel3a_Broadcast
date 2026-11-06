@@ -9,28 +9,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "var(--color-bg)",
+        bg: "#0a0a1a",
         surface: {
-          DEFAULT: "var(--color-surface)",
-          hover: "var(--color-surface-hover)",
+          DEFAULT: "#0f0f2a",
+          hover: "#141437",
         },
         border: {
-          DEFAULT: "var(--color-border)",
-          input: "var(--color-border-input)",
+          DEFAULT: "#2e2554",
+          input: "#6b5ca5",
         },
         text: {
-          DEFAULT: "var(--color-text)",
-          muted: "var(--color-text-muted)",
+          DEFAULT: "#f3f0fa",
+          muted: "#b5acd5",
         },
         accent: {
-          DEFAULT: "var(--color-accent)",
-          hover: "var(--color-accent-hover)",
-          on: "var(--color-on-accent)",
+          DEFAULT: "#7c3aed",
+          hover: "#6d28d9",
+          on: "#ffffff",
         },
-        danger: "var(--color-danger)",
-        success: "var(--color-success)",
-        warning: "var(--color-warning)",
-        discord: "var(--color-discord)",
+        danger: "#f87171",
+        success: "#4ade80",
+        warning: "#fbbf24",
+        discord: "#5865f2",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
 import { requireAuthUser } from '@/lib/auth';
-import { mockGuilds } from '@/lib/mock-data';
 import { getActiveBotToken, getBotGuilds } from '@/lib/discord/bot';
 
 export async function GET() {
   try {
     const user = await requireAuthUser();
     const token = getActiveBotToken(user.id);
-    if (token) {
-      try {
-        const liveGuilds = await getBotGuilds(token);
-        if (liveGuilds && liveGuilds.length > 0) {
-          return NextResponse.json(liveGuilds);
-        }
-      } catch (e) {
-        console.warn('Failed to fetch live guilds, falling back to mock:', e);
-      }
+    if (!token) {
+      return NextResponse.json([]);
     }
-    return NextResponse.json(mockGuilds);
+
+    try {
+      const liveGuilds = await getBotGuilds(token);
+      return NextResponse.json(liveGuilds || []);
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.warn('Failed to fetch live guilds from Discord:', err.message);
+      return NextResponse.json({ message: err.message }, { status: 400 });
+    }
   } catch (err: unknown) {
     const error = err as Error;
     return NextResponse.json({ message: error.message }, { status: 400 });

@@ -48,24 +48,44 @@ export async function validateAndConnectBot(token: string): Promise<BotInfo> {
  */
 export async function getBotGuilds(token: string): Promise<DiscordGuild[]> {
   const rest = new REST({ version: '10' }).setToken(token);
-  const rawGuilds = await rest.get(Routes.userGuilds()) as Array<{
+  const rawGuilds = await rest.get('/users/@me/guilds?with_counts=true') as Array<{
     id: string;
     name: string;
     icon: string | null;
     approximate_member_count?: number;
   }>;
 
-  return rawGuilds.map((g) => ({
-    id: g.id,
-    name: g.name,
-    memberCount: g.approximate_member_count || 100,
-    icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : undefined,
-    roles: [],
-  }));
+  const guildsWithRoles = await Promise.all(
+    rawGuilds.map(async (g) => {
+      let roles: DiscordRole[] = [];
+      try {
+        roles = await getGuildRoles(token, g.id);
+      } catch (err) {
+        console.warn(`Could not load roles for guild ${g.name} (${g.id}):`, err);
+      }
+
+      // If no custom roles found, provide an Everyone fallback role
+      if (roles.length === 0) {
+        roles = [
+          { id: `${g.id}_all`, name: 'All Members (الجميع)', color: '#0ea5e9', memberCount: g.approximate_member_count || 1 },
+        ];
+      }
+
+      return {
+        id: g.id,
+        name: g.name,
+        memberCount: g.approximate_member_count || 1,
+        icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : undefined,
+        roles,
+      };
+    })
+  );
+
+  return guildsWithRoles;
 }
 
 /**
- * Fetches roles for a specific guild with hex colors and member counts.
+ * Fetches roles for a specific guild with hex colors.
  */
 export async function getGuildRoles(token: string, guildId: string): Promise<DiscordRole[]> {
   const rest = new REST({ version: '10' }).setToken(token);
@@ -81,8 +101,8 @@ export async function getGuildRoles(token: string, guildId: string): Promise<Dis
     .map((r) => ({
       id: r.id,
       name: r.name,
-      color: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#7c3aed',
-      memberCount: 0, // In production, resolved via guild.members.fetch()
+      color: r.color && r.color !== 0 ? `#${r.color.toString(16).padStart(6, '0')}` : '#7c3aed',
+      memberCount: 0,
     }));
 }
 

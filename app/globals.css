@@ -55,6 +55,31 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Form Elements Dark Contrast Fix */
+input, textarea, select {
+  background-color: #0f0f2a !important;
+  color: #f3f0fa !important;
+  border-color: #2e2554 !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  background-color: #141437 !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  outline: none !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #8b80b6 !important;
+  opacity: 1 !important;
+}
+
+select option {
+  background-color: #0f0f2a !important;
+  color: #f3f0fa !important;
+  padding: 8px 12px;
+}
+
 /* Glassmorphism Card Style */
 .card-glass {
   background: rgba(15, 15, 42, 0.7);

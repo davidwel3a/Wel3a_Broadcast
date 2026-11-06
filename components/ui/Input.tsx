@@ -32,8 +32,8 @@ export const Input: React.FC<InputProps> = ({
         <input
           id={inputId}
           type={isPassword ? (showPassword ? 'text' : 'password') : type}
-          className={`w-full h-10 px-3.5 bg-surface/80 border rounded-md text-text text-sm placeholder:text-text-muted/60 transition-colors focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent ${
-            error ? 'border-danger' : 'border-border'
+          className={`w-full h-10 px-3.5 bg-[#0f0f2a] border rounded-md text-[#f3f0fa] text-sm placeholder:text-[#8b80b6] transition-colors focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent ${
+            error ? 'border-danger' : 'border-[#2e2554]'
           } ${isPassword ? 'ltr:pr-10 rtl:pl-10' : ''} ${className}`}
           {...props}
         />
