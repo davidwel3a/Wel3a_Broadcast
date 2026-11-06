@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
-import { mockStats } from '@/lib/mock-data';
 
 export async function GET() {
-  return NextResponse.json(mockStats);
+  return NextResponse.json({
+    totalSent: 0,
+    totalFailed: 0,
+    successRatio: '100%',
+    activeGuilds: 0,
+  });
 }

@@ -12,7 +12,7 @@ const templateSchema = z.object({
 export async function GET() {
   try {
     await requireAuthUser();
-    return NextResponse.json(mockTemplates);
+    return NextResponse.json([]);
   } catch (err: unknown) {
     const error = err as Error;
     return NextResponse.json({ message: error.message }, { status: 400 });

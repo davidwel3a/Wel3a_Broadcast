@@ -22,13 +22,6 @@ import {
 } from 'lucide-react';
 import { translations } from '../lib/i18n';
 import {
-  mockGuilds,
-  mockTemplates,
-  mockLogs,
-  mockStats,
-  mockScheduledCampaigns,
-} from '../lib/mock-data';
-import {
   Language,
   UserProfile,
   BotInfo,
@@ -38,6 +31,7 @@ import {
   MessageTemplate,
   BroadcastProgress,
   ScheduledCampaign,
+  CampaignLog,
 } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -105,33 +99,33 @@ export default function DashboardPage() {
 
   // Message Composer State (S04)
   const [activeTab, setActiveTab] = useState<'text' | 'embed' | 'image'>('text');
-  const [textContent, setTextContent] = useState('مرحباً بكم! يسرنا دعوتكم لحضور حلقة البودكاست الجديدة اليوم في تمام الساعة 9:00 م.');
-  const [embedTitle, setEmbedTitle] = useState('🎙️ حلقة جديدة: مستقبل الذكاء الاصطناعي');
-  const [embedDesc, setEmbedDesc] = useState('استمع الآن إلى أحدث النقاشات مع كبار الخبراء وتعرف على آخر التطورات.');
-  const [embedColor, setEmbedColor] = useState('#7c3aed');
-  const [embedImage, setEmbedImage] = useState('https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=600&auto=format&fit=crop&q=80');
+  const [textContent, setTextContent] = useState('');
+  const [embedTitle, setEmbedTitle] = useState('');
+  const [embedDesc, setEmbedDesc] = useState('');
+  const [embedColor, setEmbedColor] = useState('#0ea5e9');
+  const [embedImage, setEmbedImage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
   // Modals & Drawers (S05, S06, S09)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
-  const [templates, setTemplates] = useState<MessageTemplate[]>(mockTemplates);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [templateNameInput, setTemplateNameInput] = useState('');
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
 
   // Scheduling & Execution (S07, S08, S11)
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleCustomHours, setScheduleCustomHours] = useState('2');
-  const [scheduledList, setScheduledList] = useState<ScheduledCampaign[]>(mockScheduledCampaigns);
+  const [scheduledList, setScheduledList] = useState<ScheduledCampaign[]>([]);
+  const [campaignLogs, setCampaignLogs] = useState<CampaignLog[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [progress, setProgress] = useState<BroadcastProgress>({
     percentage: 0,
     sent: 0,
     failed: 0,
-    remaining: 120,
-    estTimeLeft: '2m 15s',
+    remaining: 0,
+    estTimeLeft: '0s',
     isPaused: false,
-    currentUser: { username: 'Ahmad_99' },
     failReasons: { dmClosed: 0, leftServer: 0, unknown: 0 },
   });
 
@@ -175,6 +169,11 @@ export default function DashboardPage() {
     imageUrl: activeTab === 'image' && imageUrl.trim() ? imageUrl.trim() : null,
   });
 
+  // Dynamic Global Metrics
+  const totalSent = campaignLogs.reduce((acc: number, c: CampaignLog) => acc + c.sent, 0);
+  const totalFailed = campaignLogs.reduce((acc: number, c: CampaignLog) => acc + c.failed, 0);
+  const successRatio = totalSent + totalFailed > 0 ? `${Math.round((totalSent / (totalSent + totalFailed)) * 100)}%` : '100%';
+
   // Live Broadcast Runner & Status Poller (S08)
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -192,6 +191,19 @@ export default function DashboardPage() {
               if (data.progress.percentage >= 100 || data.progress.remaining <= 0) {
                 setIsSending(false);
                 addToast(lang === 'ar' ? '🎉 اكتملت حملة البث بنجاح!' : '🎉 Broadcast campaign completed successfully!', 'success');
+                if (currentGuild) {
+                  const newLog: CampaignLog = {
+                    id: `log_${Date.now()}`,
+                    guildName: currentGuild.name,
+                    messagePreview: textContent.slice(0, 40) || embedTitle || 'Direct Message',
+                    total: data.progress.sent + data.progress.failed,
+                    sent: data.progress.sent,
+                    failed: data.progress.failed,
+                    ratio: `${Math.round((data.progress.sent / Math.max(1, data.progress.sent + data.progress.failed)) * 100)}%`,
+                    createdAt: new Date().toISOString(),
+                  };
+                  setCampaignLogs((prev) => [newLog, ...prev]);
+                }
               }
             } else if (!data.hasActiveJob) {
               setIsSending(false);
@@ -959,14 +971,6 @@ export default function DashboardPage() {
                 >
                   {t.stopBtn}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ltr:ml-auto rtl:mr-auto text-danger"
-                  onClick={() => setIsEmergencyOpen(true)}
-                >
-                  Simulate Ban Tripwire
-                </Button>
               </div>
             </section>
           )}
@@ -1018,34 +1022,40 @@ export default function DashboardPage() {
           {/* S10: Historical Logs Table */}
           <section className="card-glass p-5">
             <h3 className="font-bold text-sm text-text mb-3">{t.logsTitle}</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-text ltr:text-left rtl:text-right">
-                <thead>
-                  <tr className="border-b border-border text-text-muted">
-                    <th className="py-2.5 px-3">{t.colDate}</th>
-                    <th className="py-2.5 px-3">{t.colGuild}</th>
-                    <th className="py-2.5 px-3">{t.colPreview}</th>
-                    <th className="py-2.5 px-3">{t.colTotal}</th>
-                    <th className="py-2.5 px-3 text-success">{t.colSuccess}</th>
-                    <th className="py-2.5 px-3 text-danger">{t.colFail}</th>
-                    <th className="py-2.5 px-3">{t.colRatio}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockLogs.map((log) => (
-                    <tr key={log.id} className="border-b border-border/40 hover:bg-surface/50">
-                      <td className="py-3 px-3">{new Date(log.createdAt).toLocaleDateString()}</td>
-                      <td className="py-3 px-3 font-medium">{log.guildName}</td>
-                      <td className="py-3 px-3 text-text-muted">{log.messagePreview}</td>
-                      <td className="py-3 px-3 font-mono">{log.total}</td>
-                      <td className="py-3 px-3 font-mono text-success">{log.sent}</td>
-                      <td className="py-3 px-3 font-mono text-danger">{log.failed}</td>
-                      <td className="py-3 px-3 font-mono font-bold text-accent">{log.ratio}</td>
+            {campaignLogs.length === 0 ? (
+              <div className="py-8 text-center text-xs text-text-muted">
+                {lang === 'ar' ? 'لا يوجد سجل حملات سابقة بعد' : 'No previous campaign history yet'}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-text ltr:text-left rtl:text-right">
+                  <thead>
+                    <tr className="border-b border-border text-text-muted">
+                      <th className="py-2.5 px-3">{t.colDate}</th>
+                      <th className="py-2.5 px-3">{t.colGuild}</th>
+                      <th className="py-2.5 px-3">{t.colPreview}</th>
+                      <th className="py-2.5 px-3">{t.colTotal}</th>
+                      <th className="py-2.5 px-3 text-success">{t.colSuccess}</th>
+                      <th className="py-2.5 px-3 text-danger">{t.colFail}</th>
+                      <th className="py-2.5 px-3">{t.colRatio}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {campaignLogs.map((log) => (
+                      <tr key={log.id} className="border-b border-border/40 hover:bg-surface/50">
+                        <td className="py-3 px-3">{new Date(log.createdAt).toLocaleDateString()}</td>
+                        <td className="py-3 px-3 font-medium">{log.guildName}</td>
+                        <td className="py-3 px-3 text-text-muted">{log.messagePreview}</td>
+                        <td className="py-3 px-3 font-mono">{log.total}</td>
+                        <td className="py-3 px-3 font-mono text-success">{log.sent}</td>
+                        <td className="py-3 px-3 font-mono text-danger">{log.failed}</td>
+                        <td className="py-3 px-3 font-mono font-bold text-accent">{log.ratio}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </div>
 
@@ -1061,37 +1071,43 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex flex-col gap-2.5">
-              {templates.map((tpl) => (
-                <div
-                  key={tpl.id}
-                  className="p-3 bg-surface/70 border border-border rounded-lg flex items-center justify-between hover:border-accent transition-colors"
-                >
-                  <div className="min-w-0 flex-1">
-                    <h5 className="font-semibold text-xs text-text truncate">{tpl.name}</h5>
-                    <p className="text-[11px] text-text-muted truncate mt-0.5">
-                      {tpl.content || tpl.embed?.title}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 ltr:ml-2 rtl:mr-2">
-                    <button
-                      onClick={() => handleApplyTemplate(tpl)}
-                      className="px-2 py-1 text-[11px] font-semibold rounded bg-accent/20 text-accent hover:bg-accent hover:text-white transition-colors"
-                    >
-                      {t.applyTemplate}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTemplates(templates.filter((item) => item.id !== tpl.id));
-                        addToast(lang === 'ar' ? 'تم حذف القالب' : 'Template deleted', 'info');
-                      }}
-                      className="p-1 text-text-muted hover:text-danger transition-colors"
-                      aria-label="Delete template"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
+              {templates.length === 0 ? (
+                <div className="py-6 text-center text-xs text-text-muted">
+                  {lang === 'ar' ? 'لا توجد قوالب محفوظة بعد' : 'No saved templates yet'}
                 </div>
-              ))}
+              ) : (
+                templates.map((tpl) => (
+                  <div
+                    key={tpl.id}
+                    className="p-3 bg-surface/70 border border-border rounded-lg flex items-center justify-between hover:border-accent transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-semibold text-xs text-text truncate">{tpl.name}</h5>
+                      <p className="text-[11px] text-text-muted truncate mt-0.5">
+                        {tpl.content || tpl.embed?.title}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 ltr:ml-2 rtl:mr-2">
+                      <button
+                        onClick={() => handleApplyTemplate(tpl)}
+                        className="px-2 py-1 text-[11px] font-semibold rounded bg-accent/20 text-accent hover:bg-accent hover:text-white transition-colors"
+                      >
+                        {t.applyTemplate}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTemplates(templates.filter((item) => item.id !== tpl.id));
+                          addToast(lang === 'ar' ? 'تم حذف القالب' : 'Template deleted', 'info');
+                        }}
+                        className="p-1 text-text-muted hover:text-danger transition-colors"
+                        aria-label="Delete template"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
@@ -1104,19 +1120,19 @@ export default function DashboardPage() {
 
             <StatCard
               label={t.statTotalSent}
-              value={mockStats.totalSent.toLocaleString()}
+              value={totalSent.toLocaleString()}
               icon={<Send size={20} />}
               color="purple"
             />
             <StatCard
               label={t.statTotalFailed}
-              value={mockStats.totalFailed.toLocaleString()}
+              value={totalFailed.toLocaleString()}
               icon={<AlertCircle size={20} />}
               color="red"
             />
             <StatCard
               label={t.statSuccessRate}
-              value={mockStats.successRatio}
+              value={successRatio}
               icon={<CheckCircle size={20} />}
               color="green"
             />
