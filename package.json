@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test tests/*.test.mjs",
+    "test": "npx tsx --test tests/*.test.mjs",
     "test:bot": "node scripts/test-bot.mjs"
   },
   "keywords": [],
