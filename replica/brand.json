@@ -1,0 +1,23 @@
+{
+  "name": "RoleBeacon",
+  "tagline": "Precision Discord Announcements for Thriving Communities",
+  "avoid": [
+    "PodcastBot",
+    "Podcast Bot",
+    "podcastbot",
+    "بوت بودكاست"
+  ],
+  "domains": [
+    "podcastbot.online"
+  ],
+  "colors": [
+    "#8b5cf6",
+    "#7c3aed"
+  ],
+  "brand": {
+    "primary": "#0ea5e9",
+    "dark": "#080d1a",
+    "surface": "#0e1626",
+    "accent": "#0284c7"
+  }
+}

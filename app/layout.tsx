@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'بوت بودكاست ديسكورد | لوحة التحكم وإرسال رسائل البرودكاست',
-  description: 'لوحة تحكم ذكية لبث وإرسال رسائل البرودكاست الخاصة في سيرفرات الديسكورد بكل سهولة وأمان.',
+  title: 'RoleBeacon | لوحة إعلانات الديسكورد الموجهة',
+  description: 'منصة RoleBeacon لبث وإرسال إعلانات الديسكورد الموجهة بدقة بحسب الرتب وبأعلى درجات الأمان.',
 };
 
 export default function RootLayout({

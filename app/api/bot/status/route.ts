@@ -31,8 +31,8 @@ export async function GET() {
     return NextResponse.json({
       connected: true,
       bot: {
-        id: 'bot_podcast',
-        username: 'PodcastBroadcastBot',
+        id: 'bot_beacon',
+        username: 'RoleBeaconBot',
         avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
       },
     });

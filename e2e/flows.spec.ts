@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('PodcastBot E2E Flow Specs', () => {
+test.describe('RoleBeacon E2E Flow Specs', () => {
   test.beforeEach(async ({ page }) => {
     // Fail immediately on any unhandled console errors or 5xx server exceptions
     page.on('console', (msg) => {

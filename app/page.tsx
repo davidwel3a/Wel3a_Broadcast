@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [botInfo, setBotInfo] = useState<BotInfo | null>({
     id: 'bot_98765',
-    username: 'PodcastBroadcastBot',
+    username: 'RoleBeaconBot',
     avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
     discriminator: '0001',
   });
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       setBotConnected(true);
       setBotInfo({
         id: 'bot_custom',
-        username: 'PodcastBroadcastBot',
+        username: 'RoleBeaconBot',
         avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
         discriminator: '0001',
       });

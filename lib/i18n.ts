@@ -1,6 +1,6 @@
 export const translations = {
   ar: {
-    appTitle: 'بودكاست دسكورد',
+    appTitle: 'RoleBeacon | رول بيكون',
     loginTitle: 'تسجيل الدخول للوحة التحكم',
     loginDesc: 'يرجى تسجيل الدخول بحساب دسكورد الخاص بك للتحقق من امتلاكك لرتبة الدخول المعتمدة واستخدام خدمات البث.',
     loginButton: 'تسجيل الدخول عبر دسكورد',
@@ -84,7 +84,7 @@ export const translations = {
     emergencyAcknowledge: 'فهمت، مراجعة حالة البوت',
   },
   en: {
-    appTitle: 'Discord Broadcast Bot',
+    appTitle: 'RoleBeacon',
     loginTitle: 'Dashboard Login',
     loginDesc: 'Please sign in with your Discord account to verify your authorized membership access role.',
     loginButton: 'Sign in with Discord',
