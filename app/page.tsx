@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const [showSetupHelp, setShowSetupHelp] = useState(false);
 
   // Audience State (S03)
+  const [guildsList, setGuildsList] = useState(mockGuilds);
   const [selectedGuildId, setSelectedGuildId] = useState(mockGuilds[0].id);
   const [sendToAll, setSendToAll] = useState(false);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(['role_vip']);
@@ -119,7 +120,7 @@ export default function DashboardPage() {
   };
 
   // Helper calculations for Audience
-  const currentGuild = mockGuilds.find((g) => g.id === selectedGuildId) || mockGuilds[0];
+  const currentGuild = guildsList.find((g) => g.id === selectedGuildId) || guildsList[0] || mockGuilds[0];
   const targetRecipientCount = sendToAll
     ? currentGuild.memberCount
     : currentGuild.roles
@@ -182,26 +183,53 @@ export default function DashboardPage() {
     );
   };
 
-  const handleConnectBot = () => {
+  const handleConnectBot = async () => {
     if (!botToken.trim()) {
       addToast(lang === 'ar' ? 'يرجى إدخال توكن البوت أولاً' : 'Please enter bot token', 'warning');
       return;
     }
     setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnecting(false);
-      setBotConnected(true);
-      setBotInfo({
-        id: 'bot_custom',
-        username: 'RoleBeaconBot',
-        avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
-        discriminator: '0001',
+    try {
+      const res = await fetch('/api/bot/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: botToken.trim() }),
       });
-      addToast(lang === 'ar' ? 'تم الاتصال بالبوت بنجاح' : 'Bot connected successfully', 'success');
-    }, 800);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || (lang === 'ar' ? 'فشل الاتصال بالبوت: تأكد من صحة التوكن' : 'Failed to connect bot: invalid token'));
+      }
+      setBotConnected(true);
+      setBotInfo(data.bot);
+      addToast(lang === 'ar' ? `تم الاتصال بنجاح بالبوت: ${data.bot.username}` : `Connected to bot: ${data.bot.username}`, 'success');
+
+      // Fetch live guilds if available
+      try {
+        const guildsRes = await fetch('/api/bot/guilds');
+        if (guildsRes.ok) {
+          const liveGuilds = await guildsRes.json();
+          if (Array.isArray(liveGuilds) && liveGuilds.length > 0) {
+            setGuildsList(liveGuilds);
+            setSelectedGuildId(liveGuilds[0].id);
+          }
+        }
+      } catch {
+        // use default guilds
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      addToast(error.message, 'warning');
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
-  const handleDisconnectBot = () => {
+  const handleDisconnectBot = async () => {
+    try {
+      await fetch('/api/bot/disconnect', { method: 'POST' });
+    } catch {
+      // ignore
+    }
     setBotConnected(false);
     setBotInfo(null);
     addToast(lang === 'ar' ? 'تم قطع الاتصال بالبوت' : 'Bot disconnected', 'info');
@@ -280,8 +308,37 @@ export default function DashboardPage() {
     addToast(lang === 'ar' ? 'بدأ إرسال حملة البرودكاست...' : 'Broadcast started...', 'info');
   };
 
-  const handleTestSend = () => {
-    addToast(lang === 'ar' ? 'تم إرسال الرسالة التجريبية إلى حسابك في دسكورد!' : 'Test message sent to your Discord DM!', 'success');
+  const handleTestSend = async () => {
+    if (!botConnected) {
+      addToast(lang === 'ar' ? 'يرجى ربط البوت أولاً عبر إدخال التوكن بالأعلى والضغط على اتصال' : 'Please connect your bot first', 'warning');
+      return;
+    }
+    const targetUserId = window.prompt(
+      lang === 'ar'
+        ? 'أدخل Discord User ID الخاص بك لتلقي الرسالة التجريبية في الخاص (DM):'
+        : 'Enter your Discord User ID to receive the test DM:'
+    );
+    if (!targetUserId || !targetUserId.trim()) return;
+
+    try {
+      addToast(lang === 'ar' ? 'جاري إرسال الرسالة التجريبية إلى حسابك...' : 'Sending test message...', 'info');
+      const res = await fetch('/api/send/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId: targetUserId.trim(),
+          message: getMessagePayload(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send test DM');
+      }
+      addToast(lang === 'ar' ? '🎉 تم إرسال الرسالة التجريبية إلى حسابك في دسكورد بنجاح!' : '🎉 Test DM sent to your Discord successfully!', 'success');
+    } catch (err: unknown) {
+      const error = err as Error;
+      addToast(error.message, 'warning');
+    }
   };
 
   // If unauthenticated (S01)
@@ -426,7 +483,7 @@ export default function DashboardPage() {
                   onChange={(e) => setSelectedGuildId(e.target.value)}
                   className="w-full h-10 px-3 bg-surface/80 border border-border rounded-md text-sm text-text focus:outline-none focus:border-accent"
                 >
-                  {mockGuilds.map((g) => (
+                  {guildsList.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.name} ({g.memberCount} {t.membersUnit})
                     </option>

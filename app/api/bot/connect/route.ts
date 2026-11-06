@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuthUser } from '@/lib/auth';
-import { validateAndConnectBot } from '@/lib/discord/bot';
+import { validateAndConnectBot, setActiveBotToken } from '@/lib/discord/bot';
 import { encryptToken } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { botCredentials } from '@/lib/db/schema';
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
 
     // 1. Validate token with Discord REST API
     const botInfo = await validateAndConnectBot(token);
+    setActiveBotToken(user.id, token);
 
     // 2. Encrypt token using AES-256-GCM
     const { encrypted, iv, tag } = encryptToken(token);

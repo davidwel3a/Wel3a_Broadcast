@@ -3,10 +3,12 @@ import { requireAuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { botCredentials } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { removeActiveBotToken } from '@/lib/discord/bot';
 
 export async function POST() {
   try {
     const user = await requireAuthUser();
+    removeActiveBotToken(user.id);
 
     if (db) {
       await db

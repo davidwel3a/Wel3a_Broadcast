@@ -1,8 +1,21 @@
 import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { BotInfo, DiscordGuild, DiscordRole, MessagePayload } from '@/types';
 
-// Active in-memory bot client instances (keyed by user ID)
+// Active in-memory bot tokens and client instances (keyed by user ID)
+const activeTokens = new Map<string, string>();
 const activeClients = new Map<string, Client>();
+
+export function setActiveBotToken(userId: string, token: string) {
+  activeTokens.set(userId, token);
+}
+
+export function getActiveBotToken(userId: string): string | null {
+  return activeTokens.get(userId) || null;
+}
+
+export function removeActiveBotToken(userId: string) {
+  activeTokens.delete(userId);
+}
 
 /**
  * Validates a bot token against Discord REST API and verifies basic Gateway connectivity.
