@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuthUser } from '@/lib/auth';
-import { validateAndConnectBot, setActiveBotToken } from '@/lib/discord/bot';
+import { validateAndConnectBot, setActiveBotToken, startBotClient } from '@/lib/discord/bot';
 import { encryptToken } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { botCredentials } from '@/lib/db/schema';
@@ -18,9 +18,14 @@ export async function POST(req: Request) {
     const { token } = connectSchema.parse(body);
     const cleanToken = token.trim().replace(/^["']|["']$/g, '');
 
-    // 1. Validate token with Discord REST API
+    // 1. Validate token with Discord REST API & Launch Gateway Client to turn bot ONLINE (🟢)
     const botInfo = await validateAndConnectBot(cleanToken);
     setActiveBotToken(user.id, cleanToken);
+    try {
+      await startBotClient(user.id, cleanToken);
+    } catch (gatewayErr) {
+      console.warn('Gateway client connection warning:', gatewayErr);
+    }
 
     // 2. Encrypt token using AES-256-GCM
     const { encrypted, iv, tag } = encryptToken(cleanToken);

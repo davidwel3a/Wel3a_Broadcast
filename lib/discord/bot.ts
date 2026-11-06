@@ -15,6 +15,88 @@ export function getActiveBotToken(userId: string): string | null {
 
 export function removeActiveBotToken(userId: string) {
   activeTokens.delete(userId);
+  stopBotClient(userId);
+}
+
+export function getActiveClient(userId: string): Client | undefined {
+  return activeClients.get(userId);
+}
+
+/**
+ * Connects a persistent Gateway WebSocket Client to keep the bot ONLINE (🟢) on Discord.
+ */
+export async function startBotClient(userId: string, token: string): Promise<Client> {
+  const existing = activeClients.get(userId);
+  if (existing) {
+    try {
+      existing.destroy();
+    } catch {
+      // ignore
+    }
+    activeClients.delete(userId);
+  }
+
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.DirectMessages,
+    ],
+  });
+
+  await client.login(token);
+  activeClients.set(userId, client);
+  return client;
+}
+
+export function stopBotClient(userId: string) {
+  const client = activeClients.get(userId);
+  if (client) {
+    try {
+      client.destroy();
+    } catch {
+      // ignore
+    }
+    activeClients.delete(userId);
+  }
+}
+
+/**
+ * Fetches real human members from a Discord server filtered by selected roles.
+ */
+export async function fetchGuildTargetMembers(
+  userId: string,
+  guildId: string,
+  roleIds: string[],
+  sendToAll: boolean
+): Promise<Array<{ id: string; username: string }>> {
+  const client = activeClients.get(userId);
+  if (!client || !client.isReady()) {
+    return [];
+  }
+
+  try {
+    const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId);
+    if (!guild) return [];
+
+    const members = await guild.members.fetch({ time: 10000 });
+    const targetMembers: Array<{ id: string; username: string }> = [];
+
+    for (const [, member] of members) {
+      if (member.user.bot) continue; // skip other bots
+      if (sendToAll || roleIds.some((rId) => member.roles.cache.has(rId))) {
+        targetMembers.push({
+          id: member.user.id,
+          username: member.user.username,
+        });
+      }
+    }
+
+    return targetMembers;
+  } catch (err) {
+    console.warn(`Failed to fetch guild members for ${guildId}:`, err);
+    return [];
+  }
 }
 
 /**

@@ -175,34 +175,35 @@ export default function DashboardPage() {
     imageUrl: activeTab === 'image' && imageUrl.trim() ? imageUrl.trim() : null,
   });
 
-  // Simulated Broadcast Runner (S08)
+  // Live Broadcast Runner & Status Poller (S08)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isSending && !progress.isPaused && progress.percentage < 100) {
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          const nextSent = prev.sent + 1;
-          const nextPerc = Math.min(100, Math.round((nextSent / (targetRecipientCount || 10)) * 100));
-          const nextRemaining = Math.max(0, targetRecipientCount - nextSent);
-
-          if (nextPerc >= 100) {
-            setIsSending(false);
-            addToast(lang === 'ar' ? '🎉 اكتملت حملة البث بنجاح!' : '🎉 Broadcast campaign completed successfully!', 'success');
+    if (isSending && !progress.isPaused) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/send');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.hasActiveJob && data.progress) {
+              setProgress((prev) => ({
+                ...prev,
+                ...data.progress,
+              }));
+              if (data.progress.percentage >= 100 || data.progress.remaining <= 0) {
+                setIsSending(false);
+                addToast(lang === 'ar' ? '🎉 اكتملت حملة البث بنجاح!' : '🎉 Broadcast campaign completed successfully!', 'success');
+              }
+            } else if (!data.hasActiveJob) {
+              setIsSending(false);
+            }
           }
-
-          return {
-            ...prev,
-            sent: nextSent,
-            percentage: nextPerc,
-            remaining: nextRemaining,
-            estTimeLeft: formatETA(nextRemaining),
-            currentUser: { username: `Member_${nextSent + 10}` },
-          };
-        });
-      }, 700);
+        } catch {
+          // ignore network glitches during polling
+        }
+      }, 1200);
     }
     return () => clearInterval(interval);
-  }, [isSending, progress.isPaused, progress.percentage, targetRecipientCount, lang]);
+  }, [isSending, progress.isPaused, lang]);
 
   // Handlers
   const handleToggleRole = (id: string) => {
@@ -303,8 +304,12 @@ export default function DashboardPage() {
     addToast(lang === 'ar' ? `تم تطبيق قالب: ${tpl.name}` : `Applied template: ${tpl.name}`, 'info');
   };
 
-  const handleStartBroadcast = () => {
-    if (targetRecipientCount === 0) {
+  const handleStartBroadcast = async () => {
+    if (!currentGuild) {
+      addToast(lang === 'ar' ? 'يرجى اختيار سيرفر أولاً' : 'Please select a server', 'warning');
+      return;
+    }
+    if (targetRecipientCount === 0 && !sendToAll) {
       addToast(lang === 'ar' ? 'يرجى اختيار رتبة أو تحديد الإرسال للجميع' : 'Please choose target roles', 'warning');
       return;
     }
@@ -326,19 +331,42 @@ export default function DashboardPage() {
       return;
     }
 
-    // Immediate start
-    setProgress({
-      percentage: 0,
-      sent: 0,
-      failed: 0,
-      remaining: targetRecipientCount,
-      estTimeLeft: formatETA(estimatedSeconds),
-      isPaused: false,
-      currentUser: { username: 'Member_1' },
-      failReasons: { dmClosed: 0, leftServer: 0, unknown: 0 },
-    });
-    setIsSending(true);
-    addToast(lang === 'ar' ? 'بدأ إرسال حملة البرودكاست...' : 'Broadcast started...', 'info');
+    // Call API to start real live broadcast
+    try {
+      addToast(lang === 'ar' ? 'جاري بدء حملة الإرسال عبر البوت...' : 'Starting broadcast...', 'info');
+      const res = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guildId: currentGuild.id,
+          roleIds: selectedRoleIds,
+          sendToAll,
+          message: getMessagePayload(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to start broadcast');
+      }
+
+      const totalRecipients = data.recipientCount || targetRecipientCount || 1;
+      setProgress({
+        percentage: 0,
+        sent: 0,
+        failed: 0,
+        remaining: totalRecipients,
+        estTimeLeft: formatETA(Math.round(totalRecipients * 1.5)),
+        isPaused: false,
+        currentUser: { username: 'Member_1' },
+        failReasons: { dmClosed: 0, leftServer: 0, unknown: 0 },
+      });
+      setIsSending(true);
+      addToast(lang === 'ar' ? `بدأ إرسال الرسائل لـ ${totalRecipients} عضو بنجاح!` : `Broadcast started to ${totalRecipients} members!`, 'success');
+    } catch (err: unknown) {
+      const error = err as Error;
+      addToast(error.message, 'warning');
+    }
   };
 
   const handleTestSend = async () => {
