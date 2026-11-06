@@ -1,0 +1,21 @@
+{
+  "avoid": [
+    "PodcastBot",
+    "Podcast Bot",
+    "podcastbot.online",
+    "بوت بودكاست"
+  ],
+  "app_store": {
+    "name": "RoleBeacon: Community Notify",
+    "subtitle": "Targeted Discord Announcements",
+    "promotional_text": "Precision role-filtered broadcasts with live Discord preview and anti-ban safeguards. Protect your bot token while notifying active members.",
+    "description": "RoleBeacon provides precision announcement tools for Discord community leaders, creators, and merchants.\n\nSkip the server-wide spam. Select specific verified roles—such as VIPs, tournament players, or clients—and deliver announcements safely.\n\nKey Capabilities:\n- Role-filtered segmentation: Message exact member groups\n- Live Discord DM preview: Check embeds and markdown before dispatch\n- Anti-ban safeguards: Dynamic throttling protects bot tokens\n- Fatigue cooldown: Prevents over-messaging community members\n- Full scheduling: Set future announcements with local time conversion\n\nFree tier available. Manage your community with clarity and confidence.",
+    "keywords": "discord,broadcast,announcements,bot,roles,community,notifier,alerts,messages",
+    "whats_new": "Initial release with role segmentation, live DM preview, and anti-ban safeguards."
+  },
+  "google_play": {
+    "title": "RoleBeacon: Server Alerts",
+    "short_description": "Targeted Discord announcements for active server roles with anti-ban safety.",
+    "full_description": "RoleBeacon provides precision announcement tools for Discord community leaders, creators, and merchants.\n\nSkip the server-wide spam. Select specific verified roles—such as VIPs, tournament players, or clients—and deliver announcements safely.\n\nKey Capabilities:\n- Role-filtered segmentation: Message exact member groups\n- Live Discord DM preview: Check embeds and markdown before dispatch\n- Anti-ban safeguards: Dynamic throttling protects bot tokens\n- Fatigue cooldown: Prevents over-messaging community members\n- Full scheduling: Set future announcements with local time conversion\n\nFree tier available. Manage your community with clarity and confidence."
+  }
+}
