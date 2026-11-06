@@ -42,3 +42,8 @@ Discord-themed dark mode UI,ui_ux,must,yes,yes,Modern glassmorphic dark theme ba
 Discord developer portal & bot intents,bot_management,must,yes,skip,Third-party developer portal requires user bot creation
 Discord DM anti-spam rate limits,broadcast,must,yes,skip,Subject to Discord API Gateway and user privacy policies
 Proxy rotation / residential proxy network,broadcast,should,yes,skip,Optional custom infrastructure to prevent IP throttling
+Anti-ban jitter & dynamic throttling,broadcast,must,no,yes,Randomized 1.2s to 2.5s jitter delay between message dispatches
+Consecutive error auto-shutoff tripwire,control,must,no,yes,Instantly pauses delivery on 3 consecutive 403 or 429 errors
+Closed DMs channel fallback mode,audience,should,no,partial,Detects error 50007 and queues channel ping fallback
+Member fatigue cooldown guard (48h),audience,should,no,yes,Suppresses messaging members contacted in past 48 hours
+Dynamic variable personalization ({username} {server}),composer,should,no,yes,Prevents duplicate body text detection
