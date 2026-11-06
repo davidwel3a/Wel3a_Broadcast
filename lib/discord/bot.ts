@@ -63,6 +63,7 @@ export function stopBotClient(userId: string) {
 
 /**
  * Fetches real human members from a Discord server filtered by selected roles.
+ * Resilient multi-strategy: Gateway cache first, then REST API fallback.
  */
 export async function fetchGuildTargetMembers(
   userId: string,
@@ -70,33 +71,70 @@ export async function fetchGuildTargetMembers(
   roleIds: string[],
   sendToAll: boolean
 ): Promise<Array<{ id: string; username: string }>> {
+  const token = getActiveBotToken(userId);
+  const targetMembers: Array<{ id: string; username: string }> = [];
+
+  // Strategy 1: Gateway Client (if present and ready)
   const client = activeClients.get(userId);
-  if (!client || !client.isReady()) {
-    return [];
-  }
-
-  try {
-    const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId);
-    if (!guild) return [];
-
-    const members = await guild.members.fetch({ time: 10000 });
-    const targetMembers: Array<{ id: string; username: string }> = [];
-
-    for (const [, member] of members) {
-      if (member.user.bot) continue; // skip other bots
-      if (sendToAll || roleIds.some((rId) => member.roles.cache.has(rId))) {
-        targetMembers.push({
-          id: member.user.id,
-          username: member.user.username,
-        });
+  if (client) {
+    try {
+      if (!client.isReady()) {
+        await Promise.race([
+          new Promise((resolve) => client.once('ready', resolve)),
+          new Promise((resolve) => setTimeout(resolve, 2500)),
+        ]);
       }
-    }
 
-    return targetMembers;
-  } catch (err) {
-    console.warn(`Failed to fetch guild members for ${guildId}:`, err);
-    return [];
+      const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
+      if (guild) {
+        const members = await guild.members.fetch({ time: 8000 }).catch(() => guild.members.cache);
+        for (const [, member] of members) {
+          if (member.user.bot) continue; // skip other bots
+          if (
+            sendToAll ||
+            roleIds.length === 0 ||
+            roleIds.some((rId) => rId.includes('all') || member.roles.cache.has(rId))
+          ) {
+            targetMembers.push({
+              id: member.user.id,
+              username: member.user.username,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Gateway member fetch failed, falling back to REST API:', e);
+    }
   }
+
+  // Strategy 2: Direct Discord REST API v10 fallback
+  if (targetMembers.length === 0 && token) {
+    try {
+      const rest = new REST({ version: '10' }).setToken(token);
+      const rawMembers = (await rest.get(`/guilds/${guildId}/members?limit=1000`)) as Array<{
+        user: { id: string; username: string; bot?: boolean };
+        roles: string[];
+      }>;
+
+      for (const m of rawMembers) {
+        if (m.user.bot) continue;
+        if (
+          sendToAll ||
+          roleIds.length === 0 ||
+          roleIds.some((rId) => rId.includes('all') || (m.roles && m.roles.includes(rId)))
+        ) {
+          targetMembers.push({
+            id: m.user.id,
+            username: m.user.username,
+          });
+        }
+      }
+    } catch (e: any) {
+      console.warn('REST member fetch error:', e.message);
+    }
+  }
+
+  return targetMembers;
 }
 
 /**
@@ -208,15 +246,30 @@ export async function sendDirectMessage(
     const body: { content?: string; embeds?: unknown[]; files?: unknown[] } = {};
     if (message.content) body.content = message.content;
 
+    const embeds: any[] = [];
     if (message.embed) {
-      body.embeds = [
-        {
-          title: message.embed.title,
-          description: message.embed.description,
-          color: message.embed.color ? parseInt(message.embed.color.replace('#', ''), 16) : 0x7c3aed,
-          image: message.embed.image ? { url: message.embed.image } : undefined,
-        },
-      ];
+      embeds.push({
+        title: message.embed.title,
+        description: message.embed.description,
+        color: message.embed.color ? parseInt(message.embed.color.replace('#', ''), 16) : 0x7c3aed,
+        image: message.embed.image ? { url: message.embed.image } : undefined,
+      });
+    }
+
+    if (message.imageUrl) {
+      embeds.push({
+        image: { url: message.imageUrl },
+        color: 0x7c3aed,
+      });
+    }
+
+    if (embeds.length > 0) {
+      body.embeds = embeds;
+    }
+
+    // Discord requires either content, embeds, or files
+    if (!body.content && (!body.embeds || body.embeds.length === 0)) {
+      body.content = '👋';
     }
 
     // 3. Dispatch Message
