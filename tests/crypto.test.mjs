@@ -4,7 +4,7 @@ import { encryptToken, decryptToken } from '../lib/crypto.ts';
 
 test('Cryptography Module - AES-256-GCM', async (t) => {
   await t.test('encrypts and decrypts token losslessly', () => {
-    const originalToken = 'MTI0MTk0Mzk0MzkzMDI0OTIw.Gq_abc.1234567890abcdefghijklmnopqrstuv';
+    const originalToken = 'mock_test_token_aes_256_sample_value_xyz_123456';
     const encrypted = encryptToken(originalToken);
 
     assert.notEqual(encrypted.encrypted, originalToken);
