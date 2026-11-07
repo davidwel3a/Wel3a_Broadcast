@@ -4,19 +4,17 @@ import { cookies } from 'next/headers';
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${url.protocol}//${url.host}`;
+  const host = req.headers.get('x-forwarded-host') || url.host;
+  const proto = req.headers.get('x-forwarded-proto') || (url.protocol.replace(':', '') || 'https');
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${proto}://${host}`;
   const redirectUri = `${appUrl}/api/auth/discord/callback`;
 
   if (!code) {
     return NextResponse.redirect(`${appUrl}/?auth_error=no_code`);
   }
 
-  const clientId = process.env.DISCORD_CLIENT_ID;
-  const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return NextResponse.redirect(`${appUrl}/?oauth_setup=true`);
-  }
+  const clientId = process.env.DISCORD_CLIENT_ID || '1568387283147563188';
+  const clientSecret = process.env.DISCORD_CLIENT_SECRET || 'jodRZH0QFvi6sAHksva4PLWD4G7E1Ci4';
 
   try {
     // 1. Exchange OAuth2 Authorization Code for Access Token
@@ -80,7 +78,7 @@ export async function GET(req: Request) {
 
     return NextResponse.redirect(`${appUrl}/`);
   } catch (error) {
-    console.error('Discord OAuth Callback error:', error);
-    return NextResponse.redirect(`${appUrl}/?auth_error=unknown`);
+    console.error('Discord OAuth2 Callback Error:', error);
+    return NextResponse.redirect(`${appUrl}/?auth_error=internal_error`);
   }
 }

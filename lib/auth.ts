@@ -16,6 +16,9 @@ export async function getSessionUser(): Promise<UserProfile | null> {
   try {
     // Parse verified session data
     const parsed = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf8'));
+    if (parsed.id === 'user_discord_me' || parsed.username === 'DiscordUser') {
+      return null;
+    }
     return {
       id: parsed.id,
       username: parsed.username,

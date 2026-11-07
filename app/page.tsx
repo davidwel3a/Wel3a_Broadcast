@@ -58,7 +58,13 @@ export default function DashboardPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
-            setUser(data.data);
+            if (data.data.username === 'DiscordUser' || data.data.id === 'user_discord_me') {
+              // Purge fake session from previous build
+              await fetch('/api/auth/logout', { method: 'POST' });
+              setUser(null);
+            } else {
+              setUser(data.data);
+            }
           }
         }
       } catch {
